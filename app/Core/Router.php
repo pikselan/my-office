@@ -240,8 +240,11 @@ final class Router
         foreach (array_reverse($route['middleware']) as $middleware) {
             $pipeline = static function (Request $request) use ($middleware, $pipeline): Response {
                 if (is_string($middleware)) {
+                    [$class, $arguments] = self::parseMiddleware($middleware);
+
                     /** @var MiddlewareInterface $instance */
-                    $instance = new $middleware();
+                    $instance = $arguments === [] ? new $class() : new $class(...$arguments);
+
                     return $instance->handle($request, $pipeline);
                 }
 
@@ -254,6 +257,22 @@ final class Router
         }
 
         return $pipeline($request);
+    }
+
+    /**
+     * Dukung penulisan middleware dengan argumen: `Kelas:argumen1,argumen2`.
+     *
+     * @return array{0: string, 1: list<string>}
+     */
+    private static function parseMiddleware(string $middleware): array
+    {
+        if (!str_contains($middleware, ':')) {
+            return [$middleware, []];
+        }
+
+        [$class, $arguments] = explode(':', $middleware, 2);
+
+        return [trim($class), explode(',', $arguments)];
     }
 
     private static function callHandler(mixed $handler, Request $request): Response
