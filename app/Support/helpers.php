@@ -319,3 +319,22 @@ if (!function_exists('dd')) {
         exit;
     }
 }
+
+if (!function_exists('t')) {
+    /**
+     * Terjemahan label antarmuka.
+     *
+     * @param array<string, mixed> $replace
+     */
+    function t(string $key, array $replace = [], ?string $locale = null): string
+    {
+        return \App\Core\Translator::get($key, $replace, $locale);
+    }
+}
+
+if (!function_exists('set_locale')) {
+    function set_locale(?string $locale): void
+    {
+        \App\Core\Translator::setLocale($locale);
+    }
+}

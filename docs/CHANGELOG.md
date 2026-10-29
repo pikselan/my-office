@@ -48,3 +48,21 @@ Format: `[Batch] YYYY-MM-DD — deskripsi`.
   input numerik (sesuai semantik umum), sehingga kata sandi memakai aturan
   baru `min_chars`/`max_chars` yang selalu mengukur panjang teks.
 - `[Batch 4]` Deprecation PHP tidak lagi dijadikan exception, hanya dicatat.
+
+- `[Batch 5]` Konteks tenant & otorisasi: `TenantContext` (tenant/perusahaan aktif
+  hanya dari sesi, divalidasi ulang terhadap keanggotaan setiap request;
+  perusahaan dibatasi oleh `user_company_access`, `user_roles.company_id`, atau
+  seluruh perusahaan aktif), `Authorization` (permission & role **bercakup tenant**,
+  penugasan global tidak pernah memberi permission tenant, `withinCompanyScope()`,
+  `isPlatformAdmin()`), middleware `Auth`, `Csrf`, `Tenant`, `Permission`,
+  `Platform`, serta argumen middleware `Kelas:arg1,arg2` pada `Router`.
+  Ditambahkan 8 uji keamanan isolasi tenant (`tests/Security/TenantIsolationTest`).
+- `[Batch 6]` Design system & layar autentikasi: `public/assets/css/mo.css`
+  (token, sidebar 248px dapat diciutkan, topbar 64px, kartu, tabel, formulir,
+  badge, modal, toast, panel tiga kolom, responsif hingga 576px),
+  `public/assets/js/mo.js` (tanpa dependensi), komponen view ter-escape
+  (`app/Support/components.php`), `Paginator`, layout `layouts/app` &
+  `layouts/auth`, menu sidebar yang hanya muncul bila route terdaftar dan izin
+  terpenuhi, halaman masuk/daftar/pilih tenant/lupa & reset kata sandi, beranda
+  berangka nyata, profil (data, bahasa, kata sandi), dan 90+ kunci terjemahan
+  baru pada `lang/id.php` & `lang/en.php` dengan persistensi pilihan bahasa.

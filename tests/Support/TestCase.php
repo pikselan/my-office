@@ -183,6 +183,14 @@ abstract class TestCase
         }
     }
 
+    protected function assertStringNotContainsString(string $needle, string $haystack, string $message = 'Teks seharusnya tidak ada'): void
+    {
+        $this->assertions++;
+        if (str_contains($haystack, $needle)) {
+            $this->fail($message . ' (tidak boleh ada: ' . $this->export($needle) . ')');
+        }
+    }
+
     protected function assertStringContainsString(string $needle, string $haystack, string $message = 'Teks tidak ditemukan'): void
     {
         $this->assertContains($needle, $haystack, $message);

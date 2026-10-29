@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Core;
 
+
 /**
  * Wadah aplikasi: memuat konfigurasi, menangani request, dan mengirim response.
  */
@@ -46,9 +47,30 @@ final class App
         // Sesi tidak diperlukan pada CLI (migrasi, pengujian, cron).
         if (PHP_SAPI !== 'cli') {
             Session::start();
+            self::bootstrapLocale();
         }
 
         return $app;
+    }
+
+    /**
+     * Tentukan bahasa antarmuka untuk request ini.
+     *
+     * Urutan prioritas: pilihan di sesi (menu bahasa) → preferensi pengguna
+     * yang masuk → nilai bawaan konfigurasi.
+     */
+    private static function bootstrapLocale(): void
+    {
+        $locale = Session::get('mo.locale');
+
+        if (!is_string($locale) || $locale === '') {
+            $user = Session::get(Auth::sessionKey());
+            if (is_array($user) && isset($user['locale']) && is_string($user['locale'])) {
+                $locale = $user['locale'];
+            }
+        }
+
+        Translator::setLocale(is_string($locale) && $locale !== '' ? $locale : Config::string('app.locale.default', 'id'));
     }
 
     public static function instance(): self

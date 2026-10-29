@@ -16,6 +16,14 @@ final class Auth
     private const KEY_USER = 'mo.auth.user';
 
     /**
+     * Kunci sesi penyimpan data pengguna (dipakai bootstrap bahasa).
+     */
+    public static function sessionKey(): string
+    {
+        return self::KEY_USER;
+    }
+
+    /**
      * Simpan data pengguna pada sesi.
      *
      * @param array<string, mixed> $user

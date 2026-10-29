@@ -27,9 +27,27 @@ Batch 4 — Autentikasi. Registrasi tenant, masuk, verifikasi email, reset kata
 sandi, throttle, penguncian akun, audit log, validator, dan translasi siap.
 Rangkaian uji berjalan: 38 uji lulus, 0 gagal, 265 assertion.
 
+## Batch selesai
+
+Batch 5 — Tenant context & otorisasi. `TenantContext` (tenant & perusahaan aktif,
+validasi keanggotaan, dukungan akses bantuan), `Authorization` (permission,
+role, `can/cannot/require`, pembatasan perusahaan, deteksi admin platform), lima
+middleware (`Auth`, `Csrf`, `Tenant`, `Permission`, `Platform`), dukungan argumen
+middleware di router (`Kelas:arg1,arg2`), serta 8 uji keamanan isolasi tenant.
+
+Batch 6 — Design system & autentikasi antarmuka. `public/assets/css/mo.css`
+(token warna, layout sidebar 248px + topbar 64px, komponen, responsif),
+`public/assets/js/mo.js` (sidebar, dropdown, modal, konfirmasi, toast, fetch,
+pencarian debounce, panel), komponen PHP yang dapat dipakai ulang
+(`app/Support/components.php`), `Paginator`, layout `app` & `auth`, menu sidebar
+berbasis permission + route, halaman masuk/daftar/pilih-tenant/lupa & reset kata
+sandi, beranda dengan angka nyata, dan halaman profil. Seluruh teks antarmuka
+melalui `lang/{id,en}.php`.
+
 ## Batch sedang dikerjakan
 
-Batch 5 — Tenant context & otorisasi (RBAC, policy, middleware).
+Batch 7 — Modul Perusahaan & Struktur Organisasi (tiga panel: unit → departemen
+→ jabatan).
 
 ## File yang sudah dibuat (Batch 0)
 
@@ -48,9 +66,9 @@ Rincian pada `docs/DATABASE.md` bagian 12.
 
 | Perintah | Hasil terakhir |
 |---|---|
-| `bin/mo lint` | 54 berkas PHP valid |
+| `bin/mo lint` | 76 berkas PHP valid |
 | `bin/mo sql:check` | 17 migrasi, 0 bermasalah (parser MySQL) |
-| `bin/mo test` | 38 uji lulus, 0 gagal, 265 assertion |
+| `bin/mo test` | 61 uji lulus, 0 gagal, 328 assertion |
 | `bin/mo migrate` | 17 migrasi diterapkan pada SQLite |
 | `PRAGMA foreign_key_check` | 0 pelanggaran |
 

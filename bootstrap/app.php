@@ -16,6 +16,8 @@ require_once $moBasePath . '/app/Core/Autoload.php';
 
 App\Core\Autoload::register($moBasePath);
 require_once $moBasePath . '/app/Support/helpers.php';
+require_once $moBasePath . '/app/Support/components.php';
+require_once $moBasePath . '/app/Support/menu.php';
 
 $moApp = App\Core\App::boot($moBasePath);
 
