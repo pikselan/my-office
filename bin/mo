@@ -1,0 +1,218 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Command line MO (MyOffice).
+ *
+ * Penggunaan:
+ *   php bin/mo <perintah> [argumen] [--opsi]
+ */
+
+use App\Core\App;
+use App\Core\Config;
+use App\Core\Console;
+use App\Core\Linter;
+
+/** @var App $app */
+$app = require dirname(__DIR__) . '/bootstrap/app.php';
+
+$console = new Console();
+
+$console->register('list', 'Tampilkan seluruh perintah', static function (array $args, array $options, Console $console): int {
+    $console->printHelp();
+    return 0;
+});
+
+$console->register('about', 'Informasi aplikasi dan lingkungan', static function (array $args, array $options, Console $console): int {
+    $rows = [
+        ['Nama', Config::string('app.name')],
+        ['Lingkungan', Config::string('app.env')],
+        ['Debug', Config::bool('app.debug') ? 'aktif' : 'nonaktif'],
+        ['Timezone', Config::string('app.timezone')],
+        ['URL', Config::string('app.url')],
+        ['Database', Config::string('database.driver')],
+        ['PHP', PHP_VERSION],
+        ['SAPI', PHP_SAPI],
+        ['Waktu UTC', now()],
+    ];
+
+    $console->table(['Keterangan', 'Nilai'], $rows);
+    return 0;
+});
+
+$console->register('routes', 'Daftar route yang terdaftar', static function (array $args, array $options, Console $console): int {
+    $rows = [];
+
+    foreach (App::instance()->router()->routes() as $route) {
+        $handler = $route['handler'];
+        $handlerText = $handler instanceof Closure
+            ? 'Closure'
+            : (is_array($handler) ? $handler[0] . '@' . $handler[1] : (string) $handler);
+
+        $rows[] = [
+            implode('|', $route['methods']),
+            $route['uri'],
+            $handlerText,
+            $route['name'] ?? '-',
+        ];
+    }
+
+    $console->table(['Metode', 'URI', 'Handler', 'Nama'], $rows);
+    return 0;
+});
+
+$console->register('lint', 'Periksa sintaks seluruh berkas PHP', static function (array $args, array $options, Console $console): int {
+    $console->info('Memeriksa sintaks PHP...');
+
+    $result = Linter::check(Linter::defaultDirectories());
+
+    foreach ($result['errors'] as $error) {
+        $console->error($error['file'] . ($error['line'] > 0 ? ':' . $error['line'] : '') . ' — ' . $error['message']);
+    }
+
+    if ($result['errors'] === []) {
+        $console->success($result['checked'] . ' berkas PHP valid.');
+        return 0;
+    }
+
+    $console->error($result['checked'] . ' berkas diperiksa, ' . count($result['errors']) . ' berkas bermasalah.');
+    return 1;
+});
+
+$console->register('migrate', 'Jalankan migrasi yang belum diterapkan', static function (array $args, array $options, Console $console): int {
+    $migrator = new \App\Core\Database\Migrator(App::instance()->basePath('database/migrations'));
+    $migrator->ensureTable();
+
+    $result = $migrator->run(static function (string $file, string $state) use ($console): void {
+        if ($state === 'done') {
+            $console->success($file);
+        }
+    });
+
+    if ($result['applied'] === []) {
+        $console->info('Tidak ada migrasi baru. Skema sudah mutakhir.');
+        return 0;
+    }
+
+    $console->success(count($result['applied']) . ' migrasi diterapkan (batch ' . $result['batch'] . ').');
+    return 0;
+});
+
+$console->register('migrate:status', 'Status migrasi', static function (array $args, array $options, Console $console): int {
+    $migrator = new \App\Core\Database\Migrator(App::instance()->basePath('database/migrations'));
+    $migrator->ensureTable();
+
+    $applied = [];
+    foreach (\App\Core\Database\Database::select('SELECT migration, batch, executed_at FROM schema_migrations ORDER BY id') as $row) {
+        $applied[(string) $row['migration']] = $row;
+    }
+
+    $rows = [];
+    foreach ($migrator->files() as $file) {
+        $rows[] = [
+            $file,
+            isset($applied[$file]) ? 'diterapkan' : 'tertunda',
+            isset($applied[$file]) ? (string) $applied[$file]['batch'] : '-',
+            isset($applied[$file]) ? (string) $applied[$file]['executed_at'] : '-',
+        ];
+    }
+
+    $console->table(['Migrasi', 'Status', 'Batch', 'Diterapkan'], $rows);
+    return 0;
+});
+
+$console->register('seed', 'Jalankan seed data awal', static function (array $args, array $options, Console $console): int {
+    $seeder = new \App\Core\Database\Seeder(App::instance()->basePath('database/seeds'));
+
+    $executed = $seeder->run(static function (string $file, string $state) use ($console): void {
+        if ($state === 'done') {
+            $console->success($file);
+        }
+    });
+
+    if ($executed === []) {
+        $console->warn('Tidak ada berkas seed pada database/seeds.');
+        return 0;
+    }
+
+    $console->success(count($executed) . ' seed dijalankan.');
+    return 0;
+});
+
+$console->register('db:fresh', 'Hapus seluruh tabel, jalankan migrasi dan seed', static function (array $args, array $options, Console $console): int {
+    if (!isset($options['force']) && Config::string('app.env') === 'production') {
+        $console->error('db:fresh diblokir pada lingkungan production. Tambahkan --force bila benar-benar diperlukan.');
+        return 1;
+    }
+
+    $migrator = new \App\Core\Database\Migrator(App::instance()->basePath('database/migrations'));
+    $dropped = $migrator->dropAllTables();
+    $console->info(count($dropped) . ' tabel dihapus.');
+
+    $result = $migrator->run(static function (string $file, string $state) use ($console): void {
+        if ($state === 'done') {
+            $console->success($file);
+        }
+    });
+
+    $console->success(count($result['applied']) . ' migrasi diterapkan.');
+
+    $seeder = new \App\Core\Database\Seeder(App::instance()->basePath('database/seeds'));
+    $executed = $seeder->run(static function (string $file, string $state) use ($console): void {
+        if ($state === 'done') {
+            $console->success($file);
+        }
+    });
+    $console->success(count($executed) . ' seed dijalankan.');
+
+    return 0;
+});
+
+$console->register('db:stats', 'Jumlah baris per tabel (untuk pemeriksaan QA)', static function (array $args, array $options, Console $console): int {
+    $rows = [];
+
+    if (\App\Core\Database\Database::driver() === 'sqlite') {
+        $tables = \App\Core\Database\Database::select("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
+    } else {
+        $tables = \App\Core\Database\Database::select('SELECT table_name AS name FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name');
+    }
+
+    foreach ($tables as $table) {
+        $name = (string) $table['name'];
+        $count = \App\Core\Database\Database::scalar(
+            \App\Core\Database\Database::driver() === 'sqlite'
+                ? 'SELECT COUNT(*) FROM "' . $name . '"'
+                : 'SELECT COUNT(*) FROM `' . $name . '`',
+            [],
+            0
+        );
+        $rows[] = [$name, (string) (int) $count];
+    }
+
+    $console->table(['Tabel', 'Baris'], $rows);
+    return 0;
+});
+
+$console->register('sql:check', 'Periksa sintaks DDL MySQL pada berkas migrasi', static function (array $args, array $options, Console $console): int {
+    $script = App::instance()->basePath('tools/sql_check.py');
+
+    if (!is_file($script)) {
+        $console->error('Berkas tools/sql_check.py tidak ditemukan.');
+        return 1;
+    }
+
+    $output = shell_exec('python3 ' . escapeshellarg($script) . ' 2>&1');
+
+    if ($output === null || trim((string) $output) === '') {
+        $console->error('Pemeriksaan SQL tidak menghasilkan keluaran. Pastikan python3 dan sqlglot tersedia.');
+        return 1;
+    }
+
+    echo $output;
+
+    return str_contains((string) $output, 'FAIL') ? 1 : 0;
+});
+
+exit($console->run($argv));
