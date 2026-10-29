@@ -7,11 +7,11 @@ Terakhir diperbarui: 2026-10-29
 | Batch | Nama | Status |
 |---|---|---|
 | 0 | Analisis & perancangan | ✅ Selesai |
-| 1 | Fondasi aplikasi | ⏳ Berikutnya |
-| 2 | Lapisan database | ⬜ |
-| 3 | Skema & seed inti | ⬜ |
-| 4 | Autentikasi | ⬜ |
-| 5 | Tenant context & otorisasi | ⬜ |
+| 1 | Fondasi aplikasi | ✅ Selesai |
+| 2 | Lapisan database | ✅ Selesai |
+| 3 | Skema & seed inti | ✅ Selesai |
+| 4 | Autentikasi | ✅ Selesai |
+| 5 | Tenant context & otorisasi | ⏳ Sedang dikerjakan |
 | 6 | Design system & layout | ⬜ |
 | 7 | Dashboard | ⬜ |
 | 8 | Company management | ⬜ |
@@ -23,12 +23,13 @@ Terakhir diperbarui: 2026-10-29
 
 ## Batch terakhir selesai
 
-Batch 0 — Analisis & perancangan. Seluruh dokumen perencanaan selesai dan menjadi acuan
-wajib bagi batch berikutnya.
+Batch 4 — Autentikasi. Registrasi tenant, masuk, verifikasi email, reset kata
+sandi, throttle, penguncian akun, audit log, validator, dan translasi siap.
+Rangkaian uji berjalan: 38 uji lulus, 0 gagal, 265 assertion.
 
 ## Batch sedang dikerjakan
 
-Batch 1 — Fondasi aplikasi (struktur direktori sudah dibuat).
+Batch 5 — Tenant context & otorisasi (RBAC, policy, middleware).
 
 ## File yang sudah dibuat (Batch 0)
 
@@ -40,12 +41,21 @@ docs/PRICING.md  docs/ROADMAP.md  docs/CHANGELOG.md  docs/PROGRESS.md
 
 ## Skema database yang telah diterapkan
 
-Belum ada. Rencana: 15 berkas migrasi pada `database/migrations/` (lihat `docs/DATABASE.md`
-bagian 12).
+Diterapkan: 17 berkas migrasi, 64 tabel + `schema_migrations`, 106 indeks.
+Rincian pada `docs/DATABASE.md` bagian 12.
 
 ## Pengujian
 
-Belum ada kode yang diuji. Perkakas uji direncanakan pada Batch 2–3 (`bin/mo test`).
+| Perintah | Hasil terakhir |
+|---|---|
+| `bin/mo lint` | 54 berkas PHP valid |
+| `bin/mo sql:check` | 17 migrasi, 0 bermasalah (parser MySQL) |
+| `bin/mo test` | 38 uji lulus, 0 gagal, 265 assertion |
+| `bin/mo migrate` | 17 migrasi diterapkan pada SQLite |
+| `PRAGMA foreign_key_check` | 0 pelanggaran |
+
+Pengujian memakai SQLite in-memory yang dibentuk dari migrasi yang sama dengan
+produksi. Uji terhadap MySQL 8 belum dapat dilakukan di sandbox.
 
 ## Bug & keterbatasan terbuka
 

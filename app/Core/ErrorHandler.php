@@ -33,6 +33,14 @@ final class ErrorHandler
             if (!(error_reporting() & $severity)) {
                 return false;
             }
+
+            // Deprecation hanya dicatat: tidak menghentikan jalannya aplikasi,
+            // tetapi harus terlihat pada log agar dapat diperbaiki.
+            if (in_array($severity, [E_DEPRECATED, E_USER_DEPRECATED], true)) {
+                Logger::warning('Deprecation: ' . $message, ['file' => $file, 'line' => $line]);
+                return true;
+            }
+
             throw new \ErrorException($message, 0, $severity, $file, $line);
         });
 

@@ -215,4 +215,41 @@ $console->register('sql:check', 'Periksa sintaks DDL MySQL pada berkas migrasi',
     return str_contains((string) $output, 'FAIL') ? 1 : 0;
 });
 
+$console->register('test', 'Jalankan rangkaian pengujian', static function (array $args, array $options, Console $console): int {
+    $basePath = App::instance()->basePath();
+
+    $console->info('Menyiapkan database SQLite in-memory dari migrasi...');
+    require $basePath . '/tests/bootstrap.php';
+
+    $runner = new Tests\Support\TestRunner($basePath);
+    $suite = $args[0] ?? null;
+
+    $started = microtime(true);
+    $console->line('');
+
+    $result = $runner->run($suite, static function (string $kind, string $label) use ($console): void {
+        if ($kind === 'class') {
+            $console->line(Console::COLOR_CYAN . $label . Console::COLOR_RESET);
+            return;
+        }
+        if ($kind === 'pass') {
+            $console->success($label);
+            return;
+        }
+        $console->error($label);
+    });
+
+    $console->line('');
+    $console->line(sprintf(
+        'Waktu: %s ms · Kelas: %d · Uji: %d lulus, %d gagal · Assertion: %d',
+        number_format((microtime(true) - $started) * 1000, 0),
+        $result['classes'],
+        $result['passed'],
+        $result['failed'],
+        $result['assertions']
+    ));
+
+    return $result['failed'] > 0 ? 1 : 0;
+});
+
 exit($console->run($argv));

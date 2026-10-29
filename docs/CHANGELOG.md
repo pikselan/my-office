@@ -34,3 +34,17 @@ Format: `[Batch] YYYY-MM-DD — deskripsi`.
   dari environment; bawaan dev hanya pada `APP_ENV=development`).
 - `[Batch 3]` Perubahan skema: `user_roles.tenant_id` menjadi nullable untuk
   menampung penugasan role platform (sebelum rilis, sehingga cukup `db:fresh`).
+
+- `[Batch 4]` Autentikasi: `Auth` (sesi), `UserRepository`, `AuthService` (masuk,
+  daftar, verifikasi email, reset kata sandi, throttle & penguncian akun),
+  `TenantService` (provisioning tenant + perusahaan + langganan trial + data
+  awal), `Tokens` (token acak tersimpan sebagai hash), `Mailer` (driver log),
+  `AuditService`, `Validator`, `Translator` + `lang/id.php` & `lang/en.php`.
+- `[Batch 4]` Rangkaian uji: `tests/bootstrap.php` (SQLite in-memory dari
+  migrasi), `TestCase`, `TestRunner`, perintah `bin/mo test`.
+  Hasil: **38 uji lulus, 0 gagal, 265 assertion** (translator, validator,
+  token, skema, alur autentikasi, throttling, reset & verifikasi).
+- `[Batch 4]` Perbaikan: `min`/`max` pada validator membandingkan nilai untuk
+  input numerik (sesuai semantik umum), sehingga kata sandi memakai aturan
+  baru `min_chars`/`max_chars` yang selalu mengukur panjang teks.
+- `[Batch 4]` Deprecation PHP tidak lagi dijadikan exception, hanya dicatat.
