@@ -1,0 +1,22 @@
+# Lingkungan & rahasia
+.env
+.env.*
+!.env.example
+
+# Dependensi
+/vendor/
+node_modules/
+tools/node_modules/
+
+# Storage & cache
+/storage/logs/*
+/storage/cache/*
+/storage/tmp/*
+/storage/private/*
+/storage/database/*
+!/storage/*/.gitignore
+
+# Sistem operasi
+.DS_Store
+Thumbs.db
+*.swp

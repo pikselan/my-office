@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Pembungkus PHP CLI untuk lingkungan sandbox.
+#
+# Sandbox ini tidak memiliki PHP native dan tidak dapat memasang paket
+# (mirror Debian diblokir). PHP dijalankan melalui @php-wasm/cli (PHP 8.5
+# berbasis WebAssembly di atas Node), sehingga seluruh perintah proyek tetap
+# berbentuk `php ...`.
+#
+# Pada server produksi yang memiliki PHP native, perintah ini tidak dipakai.
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [ -x "${HERE}/node_modules/.bin/php-wasm-cli" ]; then
+  exec "${HERE}/node_modules/.bin/php-wasm-cli" "$@"
+fi
+
+if ! command -v npm >/dev/null 2>&1; then
+  echo "npm tidak ditemukan. Pasang Node.js terlebih dahulu." >&2
+  exit 127
+fi
+
+echo "Menyiapkan PHP CLI (php-wasm) di ${HERE}/node_modules ..." >&2
+npm --silent --prefix "${HERE}" install --no-audit --no-fund >&2
+exec "${HERE}/node_modules/.bin/php-wasm-cli" "$@"

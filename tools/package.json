@@ -1,0 +1,11 @@
+{
+  "name": "mo-devtools",
+  "private": true,
+  "description": "Perkakas development sandbox: PHP CLI (php-wasm) karena PHP native tidak tersedia di sandbox ini.",
+  "scripts": {
+    "php": "php-wasm-cli"
+  },
+  "dependencies": {
+    "@php-wasm/cli": "^3.1.61"
+  }
+}
